@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Black Box Router — Live Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-deep: #06060b;
+      --bg-surface: #0d0d14;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-card-hover: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-active: rgba(0, 255, 136, 0.3);
+
+      --green: #00ff88;
+      --green-dim: rgba(0, 255, 136, 0.15);
+      --amber: #ffaa00;
+      --amber-dim: rgba(255, 170, 0, 0.15);
+      --red: #ff3366;
+      --red-dim: rgba(255, 51, 102, 0.15);
+      --blue: #4488ff;
+      --blue-dim: rgba(68, 136, 255, 0.15);
+
+      --text: #e8e8ee;
+      --text-dim: #6b6b80;
+      --text-muted: #3d3d50;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Ambient glow ── */
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+    .glow-orb.green { width: 400px; height: 400px; background: var(--green); top: -100px; right: -100px; opacity: 0.08; }
+    .glow-orb.blue  { width: 500px; height: 500px; background: var(--blue); bottom: -150px; left: -150px; opacity: 0.06; }
+
+    /* ── Layout ── */
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: #000;
+      letter-spacing: -1px;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .header h1 span {
+      color: var(--text-dim);
+      font-weight: 400;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+    .live-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--green);
+      background: var(--green-dim);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    .live-dot::before {
+      content: '';
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    .live-dot.disconnected {
+      color: var(--red);
+      background: var(--red-dim);
+    }
+    .live-dot.disconnected::before {
+      background: var(--red);
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── Main grid ── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 24px;
+    }
+
+    /* ── Section titles ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .count {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    /* ── Provider cards (Horizontal List layout) ── */
+    .providers-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .provider-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 24px;
+      transition: all 0.3s ease, transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .provider-card:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+
+    /* Left edge highlight */
+    .provider-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 4px;
+    }
+    .provider-card.ready::before { background: var(--green); }
+    .provider-card.cooling::before { background: var(--amber); }
+    .provider-card.benched::before { background: var(--red); }
+    .provider-card.dead::before { background: var(--text-muted); }
+
+    .card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+      padding-left: 8px; /* Room for the left highlight */
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .card-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .card-badge.ready { background: var(--green-dim); color: var(--green); }
+    .card-badge.cooling { background: var(--amber-dim); color: var(--amber); }
+    .card-badge.benched { background: var(--red-dim); color: var(--red); }
+    .card-badge.dead { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+    .card-model {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Stats on the right */
+    .card-right {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      margin-left: 24px;
+    }
+    .card-stat {
+      text-align: right;
+      min-width: 60px;
+    }
+    .card-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .card-stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* Cooldown Bar at absolute bottom edge */
+    .cooldown-bar-track {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: transparent;
+    }
+    .cooldown-bar-fill {
+      height: 100%;
+      transition: width 0.4s linear;
+    }
+    .ready .cooldown-bar-fill { background: var(--green); width: 100%; }
+    .cooling .cooldown-bar-fill { background: var(--amber); }
+    .benched .cooldown-bar-fill { background: var(--red); }
+    .dead .cooldown-bar-fill { background: var(--text-muted); width: 0%; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .stat-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .stat-card-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .stat-card-value.green { color: var(--green); }
+    .stat-card-value.amber { color: var(--amber); }
+    .stat-card-value.red { color: var(--red); }
+    .stat-card-value.blue { color: var(--blue); }
+
+    .stat-card-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Throughput mini chart ── */
+    .throughput-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 40px;
+      margin-top: 12px;
+    }
+    .throughput-bar .bar {
+      flex: 1;
+      background: var(--green);
+      border-radius: 2px 2px 0 0;
+      min-height: 2px;
+      opacity: 0.6;
+      transition: height 0.3s ease;
+    }
+
+    /* ── Dead section ── */
+    .dead-section {
+      margin-top: 32px;
+      grid-column: 1 / -1;
+    }
+    .dead-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .dead-card {
+      background: var(--red-dim);
+      border: 1px solid rgba(255, 51, 102, 0.15);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .dead-card .card-name {
+      font-size: 13px;
+      color: var(--red);
+    }
+    .dead-card .card-model {
+      margin-bottom: 8px;
+    }
+    .dead-card .reason {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-all;
+    }
+    .dead-card .killed-at {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    /* ── Uptime ticker ── */
+    .uptime {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      grid-column: 1 / -1;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 800px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar { flex-direction: row; flex-wrap: wrap; }
+      .stat-card { flex: 1; min-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-orb green"></div>
+  <div class="glow-orb blue"></div>
+
+  <div class="app">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">BB</div>
+        <div>
+          <h1>Black Box Router <span>Live Dashboard</span></h1>
+          <div id="currentTag" style="font-size: 11px; color: var(--blue); margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-weight: 600;">Initializing...</div>
+        </div>
+      </div>
+      <div class="live-dot" id="connectionStatus">LIVE</div>
+    </header>
+
+    <div class="main">
+      <!-- Left: Active Providers -->
+      <div class="providers-section">
+        <div class="queue-status" id="queueStatus" style="display:none; margin-bottom: 24px;">
+          <div class="section-title">Current Batch Progress</div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 13px; color: var(--text-dim);">Processing <strong id="qPending" style="color:#fff;">0</strong> left out of <strong id="qTotal" style="color:#fff;">0</strong></span>
+              <span style="font-size: 13px; font-weight:600; color: var(--blue);" id="qPercent">0%</span>
+            </div>
+            <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div id="qBar" style="height: 100%; width: 0%; background: var(--blue); transition: width 0.3s;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="workers-status" id="workersStatus" style="display:none; margin-bottom: 24px;">
+          <div class="section-title">Parallel Workers <span class="count" id="workersCount">0</span></div>
+          <div class="dead-grid" id="workersGrid">
+             <!-- Workers will go here -->
+          </div>
+        </div>
+
+        <div class="section-title">
+          Active Providers <span class="count" id="activeCount">0</span>
+        </div>
+        <div class="providers-grid" id="providersGrid">
+          <div class="empty-state">Connecting to Black Box Router...</div>
+        </div>
+      </div>
+
+      <!-- Right: Stats Sidebar -->
+      <div class="sidebar">
+        <div class="stat-card" style="border: 1px solid rgba(0, 255, 136, 0.2);">
+          <div class="stat-card-label" style="color: var(--green);">Jobs Accepted</div>
+          <div class="stat-card-value green" id="jobsAccepted">0</div>
+          <div class="stat-card-sub" id="jobsAcceptedSub">Emails: 0 | Ext: 0 | Easy: 0 | Others: 0</div>
+        </div>
+        <div class="stat-card" style="border: 1px solid rgba(255, 51, 102, 0.2);">
+          <div class="stat-card-label" style="color: var(--red);">Jobs Rejected</div>
+          <div class="stat-card-value red" id="jobsRejected">0</div>
+        </div>
+        
+        <div style="height: 12px;"></div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Requests Done</div>
+          <div class="stat-card-value green" id="successCount">0</div>
+          <div class="stat-card-sub" id="successRate">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Total Requests</div>
+          <div class="stat-card-value blue" id="totalRequests">0</div>
+          <div class="stat-card-sub" id="throughputSub">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Failed</div>
+          <div class="stat-card-value red" id="failCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Max RPM</div>
+          <div class="stat-card-value amber" id="currentRPM">0</div>
+          <div class="stat-card-sub" id="rpmSub">requests per minute</div>
+        </div>
+      </div>
+
+      <!-- Bottom: Dead Providers -->
+      <div class="dead-section" id="deadSection" style="display:none">
+        <div class="section-title">
+          Dead Providers <span class="count" id="deadCount">0</span>
+        </div>
+        <div class="dead-grid" id="deadGrid"></div>
+      </div>
+
+      <!-- Uptime -->
+      <div class="uptime" id="uptime">Uptime: 00:00:00</div>
+    </div>
+  </div>
+
+  <script>
+    // ── SSE Connection ──────────────────────────────────────────────────────
+    let evtSource = null;
+    let lastState = null;
+    let reconnectTimer = null;
+
+    function connect() {
+      evtSource = new EventSource('/events');
+
+      evtSource.onmessage = (e) => {
+        try {
+          lastState = JSON.parse(e.data);
+          render(lastState);
+          setConnected(true);
+        } catch {}
+      };
+
+      evtSource.onerror = () => {
+        setConnected(false);
+        evtSource.close();
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connect, 3000);
+      };
+    }
+
+    function setConnected(ok) {
+      const el = document.getElementById('connectionStatus');
+      if (ok) {
+        el.textContent = 'LIVE';
+        el.className = 'live-dot';
+      } else {
+        el.textContent = 'DISCONNECTED';
+        el.className = 'live-dot disconnected';
+      }
+    }
+
+    // ── Render ──────────────────────────────────────────────────────────────
+    function render(state) {
+      // Current Tag
+      if (state.currentTag) {
+        document.getElementById('currentTag').textContent = state.currentTag;
+      }
+
+      // Stats sidebar
+      document.getElementById('successCount').textContent = state.stats.successCount;
+      document.getElementById('totalRequests').textContent = state.stats.totalRequests;
+      document.getElementById('failCount').textContent = state.stats.failCount;
+      document.getElementById('currentRPM').textContent = state.stats.currentRPM;
+      document.getElementById('activeCount').textContent = state.stats.activeProviders;
+
+      // Job Stats
+      if (state.jobStats) {
+        document.getElementById('jobsAccepted').textContent = state.jobStats.accepted;
+        document.getElementById('jobsRejected').textContent = state.jobStats.rejected;
+        document.getElementById('jobsAcceptedSub').textContent = `Emails: ${state.jobStats.email} | Ext: ${state.jobStats.external} | Easy: ${state.jobStats.easyApply} | Others: ${state.jobStats.others}`;
+      }
+
+      // Queue Stats
+      if (state.queueStats && state.queueStats.total > 0) {
+        document.getElementById('queueStatus').style.display = 'block';
+        document.getElementById('qTotal').textContent = state.queueStats.total;
+        document.getElementById('qPending').textContent = state.queueStats.pending;
+        const pct = Math.round((state.queueStats.done / state.queueStats.total) * 100);
+        document.getElementById('qPercent').textContent = pct + '%';
+        document.getElementById('qBar').style.width = pct + '%';
+      } else {
+        document.getElementById('queueStatus').style.display = 'none';
+      }
+
+      const total = state.stats.totalRequests || 1;
+      const rate = ((state.stats.successCount / total) * 100).toFixed(1);
+      document.getElementById('successRate').textContent = `${rate}% success rate`;
+
+      const mins = (state.stats.uptimeSeconds / 60) || 1;
+      const throughput = (state.stats.successCount / mins).toFixed(1);
+      document.getElementById('throughputSub').textContent = `~${throughput} req/min avg`;
+
+      // Uptime
+      const s = state.stats.uptimeSeconds;
+      const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+      const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+      const ss = String(s % 60).padStart(2, '0');
+      document.getElementById('uptime').textContent = `Uptime: ${hh}:${mm}:${ss}`;
+
+      // Active providers
+      renderProviders(state.providers);
+
+      // Dead providers
+      renderDead(state.dead, state.providers.filter(p => p.status === 'dead'));
+
+      // Workers
+      if (state.workerStates && state.workerStates.length > 0) {
+        document.getElementById('workersStatus').style.display = 'block';
+        document.getElementById('workersCount').textContent = state.workerStates.length;
+        renderWorkers(state.workerStates);
+      } else {
+        document.getElementById('workersStatus').style.display = 'none';
+      }
+    }
+
+    function renderWorkers(workers) {
+      const grid = document.getElementById('workersGrid');
+      grid.innerHTML = workers.map((w, i) => {
+        const isIdle = w.includes('Idle') || w.includes('Initializing') || w.includes('Exited');
+        const colorClass = isIdle ? 'amber' : 'green';
+        const bgClass = isIdle ? 'amber-dim' : 'green-dim';
+        return `
+          <div class="dead-card" style="background: var(--${bgClass}); border: 1px solid rgba(var(--${colorClass}), 0.15);">
+            <div class="card-name" style="color: var(--${colorClass}); margin-bottom: 4px;">Worker ${i}</div>
+            <div class="reason" style="color: var(--text);">${w}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderProviders(providers) {
+      const grid = document.getElementById('providersGrid');
+      const active = providers.filter(p => p.status !== 'dead');
+
+      if (active.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No active providers</div>';
+        return;
+      }
+
+      grid.innerHTML = active.map(p => {
+        const cooldownDisplay = p.status === 'ready'
+          ? '0.0'
+          : p.cooldownSec;
+
+        const barPercent = p.status === 'ready'
+          ? 100
+          : Math.max(0, 100 - (p.cooldownMs / (p.rpm > 100 ? 100 : p.rpm > 20 ? 3000 : 6000)) * 100);
+
+        return `
+          <div class="provider-card ${p.status}">
+            <div class="card-left">
+              <div class="card-header">
+                <div class="card-name">${p.name}</div>
+                <div class="card-badge ${p.status}">${p.status}</div>
+              </div>
+              <div class="card-model">${p.model}</div>
+            </div>
+            <div class="card-right">
+              <div class="card-stat">
+                <div class="card-stat-value">${cooldownDisplay}s</div>
+                <div class="card-stat-label">Cooldown</div>
+              </div>
+              <div class="card-stat">
+                <div class="card-stat-value">${p.requestsDone}</div>
+                <div class="card-stat-label">Done</div>
+              </div>
+              <div class="card-stat">
+                <div class="card-stat-value">${p.rpm}</div>
+                <div class="card-stat-label">RPM</div>
+              </div>
+            </div>
+            <div class="cooldown-bar-track">
+              <div class="cooldown-bar-fill" style="width: ${barPercent}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDead(deadFromRouter, deadFromBuckets) {
+      const all = [
+        ...deadFromRouter.map(d => ({ ...d, fromRouter: true })),
+        ...deadFromBuckets.map(d => ({
+          name: d.name,
+          model: d.model,
+          reason: d.lastError || 'Dead key',
+          killedAt: 'This session',
+          fromRouter: false,
+        })),
+      ];
+
+      const section = document.getElementById('deadSection');
+      const grid = document.getElementById('deadGrid');
+      const countEl = document.getElementById('deadCount');
+
+      if (all.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      countEl.textContent = all.length;
+
+      grid.innerHTML = all.map(d => `
+        <div class="dead-card">
+          <div class="card-name">☠️ ${d.name}</div>
+          <div class="card-model">${d.model}</div>
+          <div class="reason">${d.reason || 'Unknown error'}</div>
+          <div class="killed-at">${d.killedAt || ''}</div>
+        </div>
+      `).join('');
+    }
+
+    // ── Init ────────────────────────────────────────────────────────────────
+    connect();
+  </script>
+</body>
+</html>
