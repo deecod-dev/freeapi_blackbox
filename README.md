@@ -10,6 +10,8 @@ most rate limiters use queues. queues consume memory and get stuck. i didn't wan
 
 so instead, it's stateless. every provider has a drop rate (the exact time needed between calls to not get banned). when you send a request, it checks who has cooled down. if someone is ready, it fires. if everyone is busy, it calculates the exact microsecond the next one will be free and uses node's event loop to sleep the request until then. no queues, no bloat.
 
+by compiling all these free tiers, the theoretical throughput is around 1,700 requests per minute across 11 providers. the models it cycles through are: cloudflare llama-3.1 (8B), mistral nemo (12B), groq llama-3.3 (70B), cerebras gpt-oss (120B), openrouter mistral nemo (12B), github gpt-4o-mini (proprietary), zhipu glm-4 flash (proprietary), cohere command r+ (104B), nvidia llama-3.1 (8B), huggingface llama-3 (8B), and gemini flash (proprietary). some models repeat across providers but each one has its own separate rate limit so they all add up.
+
 ### handling dead keys
 
 api keys die. sometimes you run out of credits (402), hit hard limits (429), or get banned (401/403).
@@ -52,3 +54,7 @@ async function main() {
 
 main();
 ```
+
+## viewing working:
+
+it'll open a local dashboard server on port 3737 when it boots. open `localhost:3737` in the browser to see live provider stats, request counts, and which keys are alive or dead.
