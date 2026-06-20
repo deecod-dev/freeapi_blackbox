@@ -6,16 +6,19 @@ it just sits between the app and the providers, routing prompts to whoever is fa
 
 ## benchmarks
 
-in a stress test of 300 short queries under extreme load:
-- **416.5 rpm** achieved with a **98.0% success rate** under 40 concurrent workers. 
-- **600.0 rpm** achieved with a **100% success rate** under 9 concurrent workers (average latency of 0.81s).
+in a stress test of 30 short queries under high concurrency:
+- **600.0 burst rpm** achieved with a **100% success rate** under 9 concurrent workers (average latency of 0.81s). 
+*(note: this is an extrapolated burst rpm from a 3-second window. the tokens were consumed rapidly before any hard rate limits kicked in.)*
+
+in a longer stress test of 300 queries under extreme load:
+- **416.5 sustained rpm** achieved with a **98.0% success rate** under 40 concurrent workers. 
 
 under the hood, even though 5 keys were active at the start of the 40-concurrency test, 4 of them (nvidia, cohere, github, cerebras) hit rate limits or timeouts mid-run. the router benched them and redirected 100% of the traffic to **cloudflare workers ai**, which single-handedly processed the entire load without breaking.
 
 ### theoretical limits
 if all 11 keys in the default configuration are working at their standard free-tier limits, blackbox can achieve:
 - **theoretical max concurrency:** 36 concurrent requests
-- **theoretical max throughput:** ~540 requests per minute (rpm)
+- **theoretical max sustained throughput:** ~540 requests per minute (rpm)
 
 ## methodology
 
