@@ -4,6 +4,19 @@ i built this because i needed to make thousands of llm calls per minute for a pr
 
 it just sits between the app and the providers, routing prompts to whoever is fastest.
 
+## benchmarks
+
+in a stress test of 300 short queries under extreme load:
+- **416.5 rpm** achieved with a **98.0% success rate** under 40 concurrent workers. 
+- **600.0 rpm** achieved with a **100% success rate** under 9 concurrent workers (average latency of 0.81s).
+
+under the hood, even though 5 keys were active at the start of the 40-concurrency test, 4 of them (nvidia, cohere, github, cerebras) hit rate limits or timeouts mid-run. the router benched them and redirected 100% of the traffic to **cloudflare workers ai**, which single-handedly processed the entire load without breaking.
+
+### theoretical limits
+if all 11 keys in the default configuration are working at their standard free-tier limits, blackbox can achieve:
+- **theoretical max concurrency:** 36 concurrent requests
+- **theoretical max throughput:** ~540 requests per minute (rpm)
+
 ## methodology
 
 most rate limiters use queues. queues consume memory and get stuck. i didn't want to deal with that.
