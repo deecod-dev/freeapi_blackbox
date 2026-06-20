@@ -19,6 +19,7 @@ under the hood, even though 5 keys were active at the start of the 40-concurrenc
 if all 11 keys in the default configuration are working at their standard free-tier limits, blackbox can achieve:
 - **theoretical max concurrency:** 36 concurrent requests
 - **theoretical max sustained throughput:** ~540 requests per minute (rpm)
+- **minimum continuous 24-hour rpm:** ~156 rpm *(calculated by summing the total 24-hour quota across all 11 free tiers: ~225,933 requests / 1440 minutes = ~156 rpm. daily-capped providers will dry up in the first few hours, leaving uncapped ones to carry the load).*
 
 ## methodology
 
