@@ -3,701 +3,606 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Black Box Router — Live Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>BlackBox API — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg-deep: #06060b;
-      --bg-surface: #0d0d14;
-      --bg-card: rgba(255, 255, 255, 0.03);
-      --bg-card-hover: rgba(255, 255, 255, 0.06);
-      --border: rgba(255, 255, 255, 0.06);
-      --border-active: rgba(0, 255, 136, 0.3);
-
-      --green: #00ff88;
-      --green-dim: rgba(0, 255, 136, 0.15);
-      --amber: #ffaa00;
-      --amber-dim: rgba(255, 170, 0, 0.15);
-      --red: #ff3366;
-      --red-dim: rgba(255, 51, 102, 0.15);
-      --blue: #4488ff;
-      --blue-dim: rgba(68, 136, 255, 0.15);
-
-      --text: #e8e8ee;
-      --text-dim: #6b6b80;
-      --text-muted: #3d3d50;
+      --bg: #0a0a0f;
+      --bg-card: #12121a;
+      --bg-input: #1a1a24;
+      --border: #2a2a3a;
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, 0.15);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245, 158, 11, 0.15);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.15);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59, 130, 246, 0.15);
+      --purple: #8b5cf6;
+      --text: #e4e4e7;
+      --text-dim: #71717a;
+      --text-muted: #3f3f46;
     }
-
     body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg-deep);
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
     }
-
-    /* ── Background grid ── */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ── Ambient glow ── */
-    .glow-orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(120px);
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.4;
-    }
-    .glow-orb.green { width: 400px; height: 400px; background: var(--green); top: -100px; right: -100px; opacity: 0.08; }
-    .glow-orb.blue  { width: 500px; height: 500px; background: var(--blue); bottom: -150px; left: -150px; opacity: 0.06; }
-
-    /* ── Layout ── */
-    .app {
-      position: relative;
-      z-index: 1;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 32px 24px;
-    }
-
-    /* ── Header ── */
+    /* Layout */
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    
+    /* Header */
     .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 32px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px;
     }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 40px; height: 40px; background: linear-gradient(135deg, var(--green), var(--blue));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; color: #000;
     }
-    .logo {
-      width: 42px; height: 42px;
-      background: linear-gradient(135deg, var(--green), var(--blue));
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      font-weight: 900;
-      color: #000;
-      letter-spacing: -1px;
+    .logo h1 { font-size: 20px; font-weight: 700; }
+    .logo span { color: var(--text-dim); font-weight: 400; font-size: 13px; }
+    .status-badge {
+      display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;
+      padding: 6px 14px; border-radius: 20px;
     }
-    .header h1 {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+    .status-badge.online { background: var(--green-dim); color: var(--green); }
+    .status-badge.offline { background: var(--red-dim); color: var(--red); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 2s infinite; }
+    .status-badge.online .status-dot { background: var(--green); }
+    .status-badge.offline .status-dot { background: var(--red); animation: none; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg-card); padding: 4px; border-radius: 10px; width: fit-content; }
+    .tab {
+      padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; color: var(--text-dim); border: none; background: none;
     }
-    .header h1 span {
-      color: var(--text-dim);
-      font-weight: 400;
-      font-size: 14px;
-      margin-left: 8px;
-    }
-    .live-dot {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--green);
-      background: var(--green-dim);
-      padding: 4px 12px;
-      border-radius: 20px;
-    }
-    .live-dot::before {
-      content: '';
-      width: 8px; height: 8px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-    }
-    .live-dot.disconnected {
-      color: var(--red);
-      background: var(--red-dim);
-    }
-    .live-dot.disconnected::before {
-      background: var(--red);
-      animation: none;
-    }
+    .tab:hover { color: var(--text); }
+    .tab.active { background: var(--bg); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
+    /* Cards */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
     }
+    .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 12px; }
+    
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue { color: var(--blue); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.red { color: var(--red); }
+    .stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+    /* Main Grid */
+    .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+    @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
 
-    /* ── Main grid ── */
-    .main {
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 24px;
+    /* Providers */
+    .providers-list { display: flex; flex-direction: column; gap: 10px; }
+    .provider {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; position: relative; overflow: hidden;
     }
+    .provider::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .provider.ready::before { background: var(--green); }
+    .provider.busy::before, .provider.cooling::before { background: var(--amber); }
+    .provider.benched::before, .provider.exhausted::before { background: var(--red); }
+    .provider.dead::before { background: var(--text-muted); }
+    .provider-info { padding-left: 12px; }
+    .provider-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .provider-model { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+    .provider-stats { display: flex; gap: 24px; align-items: center; }
+    .provider-stat { text-align: right; }
+    .provider-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; }
+    .provider-stat-label { font-size: 9px; text-transform: uppercase; color: var(--text-dim); }
+    .badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+    .badge.ready { background: var(--green-dim); color: var(--green); }
+    .badge.busy, .badge.cooling { background: var(--amber-dim); color: var(--amber); }
+    .badge.benched, .badge.exhausted { background: var(--red-dim); color: var(--red); }
+    .badge.dead { background: var(--bg); color: var(--text-muted); }
+    /* Chat Playground */
+    .chat-container { display: flex; flex-direction: column; height: 500px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+    .message.user { background: var(--blue); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .message.assistant { background: var(--bg-input); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .message.error { background: var(--red-dim); color: var(--red); }
+    .message-meta { font-size: 10px; color: var(--text-dim); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+    .chat-input-container { display: flex; gap: 10px; padding: 16px; border-top: 1px solid var(--border); }
+    .chat-input {
+      flex: 1; padding: 12px 16px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px; resize: none;
+    }
+    .chat-input:focus { outline: none; border-color: var(--blue); }
+    .send-btn {
+      padding: 12px 24px; background: var(--blue); color: white; border: none;
+      border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .send-btn:hover { background: #2563eb; }
+    .send-btn:disabled { background: var(--bg-input); color: var(--text-dim); cursor: not-allowed; }
+    /* Code Block */
+    .code-block {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      overflow-x: auto; position: relative; margin: 12px 0;
+    }
+    .code-block pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
+    .copy-btn {
+      position: absolute; top: 8px; right: 8px; padding: 6px 12px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-dim); font-size: 11px; cursor: pointer;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
 
-    /* ── Section titles ── */
-    .section-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-dim);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title .count {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-    }
-
-    /* ── Provider cards (Horizontal List layout) ── */
-    .providers-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .provider-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 24px;
-      transition: all 0.3s ease, transform 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .provider-card:hover {
-      background: var(--bg-card-hover);
-      transform: translateY(-2px);
-    }
-
-    /* Left edge highlight */
-    .provider-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; bottom: 0;
-      width: 4px;
-    }
-    .provider-card.ready::before { background: var(--green); }
-    .provider-card.cooling::before { background: var(--amber); }
-    .provider-card.benched::before { background: var(--red); }
-    .provider-card.dead::before { background: var(--text-muted); }
-
-    .card-left {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-      min-width: 0;
-      padding-left: 8px; /* Room for the left highlight */
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .card-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-    }
-    .card-badge {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 3px 8px;
-      border-radius: 6px;
-    }
-    .card-badge.ready { background: var(--green-dim); color: var(--green); }
-    .card-badge.cooling { background: var(--amber-dim); color: var(--amber); }
-    .card-badge.benched { background: var(--red-dim); color: var(--red); }
-    .card-badge.dead { background: rgba(255,255,255,0.05); color: var(--text-muted); }
-
-    .card-model {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: var(--text-dim);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Stats on the right */
-    .card-right {
-      display: flex;
-      align-items: center;
-      gap: 40px;
-      margin-left: 24px;
-    }
-    .card-stat {
-      text-align: right;
-      min-width: 60px;
-    }
-    .card-stat-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 20px;
-      font-weight: 800;
-    }
-    .card-stat-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--text-dim);
-      margin-top: 4px;
-    }
-
-    /* Cooldown Bar at absolute bottom edge */
-    .cooldown-bar-track {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 3px;
-      background: transparent;
-    }
-    .cooldown-bar-fill {
-      height: 100%;
-      transition: width 0.4s linear;
-    }
-    .ready .cooldown-bar-fill { background: var(--green); width: 100%; }
-    .cooling .cooldown-bar-fill { background: var(--amber); }
-    .benched .cooldown-bar-fill { background: var(--red); }
-    .dead .cooldown-bar-fill { background: var(--text-muted); width: 0%; }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-    }
-    .stat-card-label {
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-dim);
-      margin-bottom: 8px;
-    }
-    .stat-card-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 32px;
-      font-weight: 800;
-      line-height: 1;
-    }
-    .stat-card-value.green { color: var(--green); }
-    .stat-card-value.amber { color: var(--amber); }
-    .stat-card-value.red { color: var(--red); }
-    .stat-card-value.blue { color: var(--blue); }
-
-    .stat-card-sub {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 4px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* ── Throughput mini chart ── */
-    .throughput-bar {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 40px;
-      margin-top: 12px;
-    }
-    .throughput-bar .bar {
-      flex: 1;
-      background: var(--green);
-      border-radius: 2px 2px 0 0;
-      min-height: 2px;
-      opacity: 0.6;
-      transition: height 0.3s ease;
-    }
-
-    /* ── Dead section ── */
-    .dead-section {
-      margin-top: 32px;
-      grid-column: 1 / -1;
-    }
-    .dead-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 10px;
-    }
-    .dead-card {
-      background: var(--red-dim);
-      border: 1px solid rgba(255, 51, 102, 0.15);
-      border-radius: 12px;
-      padding: 14px;
-    }
-    .dead-card .card-name {
-      font-size: 13px;
-      color: var(--red);
-    }
-    .dead-card .card-model {
-      margin-bottom: 8px;
-    }
-    .dead-card .reason {
-      font-size: 10px;
-      color: var(--text-dim);
-      font-family: 'JetBrains Mono', monospace;
-      word-break: break-all;
-    }
-    .dead-card .killed-at {
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* ── Empty state ── */
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: var(--text-dim);
-      font-size: 13px;
-    }
-
-    /* ── Uptime ticker ── */
-    .uptime {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: var(--text-dim);
-      text-align: center;
-      margin-top: 24px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-      grid-column: 1 / -1;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 800px) {
-      .main { grid-template-columns: 1fr; }
-      .sidebar { flex-direction: row; flex-wrap: wrap; }
-      .stat-card { flex: 1; min-width: 120px; }
-    }
+    /* API Docs */
+    .endpoint { margin-bottom: 24px; }
+    .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .method { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .method.get { background: var(--green-dim); color: var(--green); }
+    .method.post { background: var(--blue-dim); color: var(--blue); }
+    .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+    .endpoint-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
+    
+    /* Progress bars */
+    .progress-bar { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .progress-fill.green { background: var(--green); }
+    .progress-fill.blue { background: var(--blue); }
   </style>
 </head>
 <body>
-  <div class="glow-orb green"></div>
-  <div class="glow-orb blue"></div>
-
-  <div class="app">
+  <div class="container">
     <header class="header">
-      <div class="header-left">
-        <div class="logo">BB</div>
+      <div class="logo">
+        <div class="logo-icon">BB</div>
         <div>
-          <h1>Black Box Router <span>Live Dashboard</span></h1>
-          <div id="currentTag" style="font-size: 11px; color: var(--blue); margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-weight: 600;">Initializing...</div>
+          <h1>BlackBox API <span>v2.0</span></h1>
         </div>
       </div>
-      <div class="live-dot" id="connectionStatus">LIVE</div>
+      <div class="status-badge online" id="status">
+        <div class="status-dot"></div>
+        <span>CONNECTED</span>
+      </div>
     </header>
 
-    <div class="main">
-      <!-- Left: Active Providers -->
-      <div class="providers-section">
-        <div class="queue-status" id="queueStatus" style="display:none; margin-bottom: 24px;">
-          <div class="section-title">Current Batch Progress</div>
-          <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+    <div class="tabs">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="playground">Playground</button>
+      <button class="tab" data-tab="docs">API Docs</button>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="stats-grid">
+        <div class="card">
+          <div class="card-title">Requests</div>
+          <div class="stat-value green" id="totalRequests">0</div>
+          <div class="stat-sub"><span id="successRate">0%</span> success</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cache Hit Rate</div>
+          <div class="stat-value blue" id="cacheHitRate">0%</div>
+          <div class="stat-sub"><span id="cacheSize">0</span> / 1000 cached</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Queue</div>
+          <div class="stat-value amber" id="queueLength">0</div>
+          <div class="stat-sub"><span id="queueActive">0</span> / 15 active</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Uptime</div>
+          <div class="stat-value" id="uptime">00:00:00</div>
+          <div class="stat-sub" id="rpmSub">~0 req/min</div>
+        </div>
+      </div>
+      <div class="main-grid">
+        <div>
+          <div class="card-title">Active Providers <span id="providerCount">0</span></div>
+          <div class="providers-list" id="providersList">
+            <div style="color: var(--text-dim); padding: 20px; text-align: center;">Loading...</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-title">Server Queue</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 13px; color: var(--text-dim);">Processing <strong id="qPending" style="color:#fff;">0</strong> left out of <strong id="qTotal" style="color:#fff;">0</strong></span>
-              <span style="font-size: 13px; font-weight:600; color: var(--blue);" id="qPercent">0%</span>
+              <span style="font-size: 13px;">Active Requests</span>
+              <span style="font-family: 'JetBrains Mono', monospace;" id="queueActiveDetail">0 / 15</span>
             </div>
-            <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
-              <div id="qBar" style="height: 100%; width: 0%; background: var(--blue); transition: width 0.3s;"></div>
+            <div class="progress-bar">
+              <div class="progress-fill blue" id="queueProgress" style="width: 0%"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 16px; margin-bottom: 8px;">
+              <span style="font-size: 13px;">Queued</span>
+              <span style="font-family: 'JetBrains Mono', monospace;" id="queuedDetail">0 / 500</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill green" id="queuedProgress" style="width: 0%"></div>
             </div>
           </div>
-        </div>
 
-        <div class="workers-status" id="workersStatus" style="display:none; margin-bottom: 24px;">
-          <div class="section-title">Parallel Workers <span class="count" id="workersCount">0</span></div>
-          <div class="dead-grid" id="workersGrid">
-             <!-- Workers will go here -->
+          <div class="card">
+            <div class="card-title">Response Cache</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Hits</span>
+              <span style="color: var(--green); font-family: 'JetBrains Mono', monospace;" id="cacheHits">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Misses</span>
+              <span style="color: var(--amber); font-family: 'JetBrains Mono', monospace;" id="cacheMisses">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Entries</span>
+              <span style="font-family: 'JetBrains Mono', monospace;" id="cacheEntries">0 / 1000</span>
+            </div>
           </div>
-        </div>
-
-        <div class="section-title">
-          Active Providers <span class="count" id="activeCount">0</span>
-        </div>
-        <div class="providers-grid" id="providersGrid">
-          <div class="empty-state">Connecting to Black Box Router...</div>
         </div>
       </div>
+    </div>
+    <!-- Playground Tab -->
+    <div class="tab-content" id="tab-playground">
+      <div class="main-grid">
+        <div class="card chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+              👋 Welcome to the BlackBox Playground! Send a message to test the API.
+              <div class="message-meta">Use the default API key: sk-blackbox-default</div>
+            </div>
+          </div>
+          <div class="chat-input-container">
+            <textarea class="chat-input" id="chatInput" placeholder="Type your message..." rows="1"></textarea>
+            <button class="send-btn" id="sendBtn">Send</button>
+          </div>
+        </div>
 
-      <!-- Right: Stats Sidebar -->
-      <div class="sidebar">
-        <div class="stat-card" style="border: 1px solid rgba(0, 255, 136, 0.2);">
-          <div class="stat-card-label" style="color: var(--green);">Jobs Accepted</div>
-          <div class="stat-card-value green" id="jobsAccepted">0</div>
-          <div class="stat-card-sub" id="jobsAcceptedSub">Emails: 0 | Ext: 0 | Easy: 0 | Others: 0</div>
+        <div>
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-title">Settings</div>
+            <label style="display: block; margin-bottom: 12px;">
+              <span style="font-size: 12px; color: var(--text-dim);">API Key</span>
+              <input type="text" id="apiKey" value="sk-blackbox-default" 
+                style="width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text); margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+            </label>
+            <label style="display: block;">
+              <span style="font-size: 12px; color: var(--text-dim);">API Endpoint</span>
+              <input type="text" id="apiEndpoint" value="http://localhost:3000" 
+                style="width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text); margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+            </label>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Last Response Info</div>
+            <div id="responseInfo" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);">
+              No requests yet
+            </div>
+          </div>
         </div>
-        <div class="stat-card" style="border: 1px solid rgba(255, 51, 102, 0.2);">
-          <div class="stat-card-label" style="color: var(--red);">Jobs Rejected</div>
-          <div class="stat-card-value red" id="jobsRejected">0</div>
-        </div>
+      </div>
+    </div>
+    <!-- API Docs Tab -->
+    <div class="tab-content" id="tab-docs">
+      <div class="card">
+        <h2 style="margin-bottom: 24px;">API Documentation</h2>
         
-        <div style="height: 12px;"></div>
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="endpoint-path">/v1/chat/completions</span>
+          </div>
+          <div class="endpoint-desc">OpenAI-compatible chat completion endpoint. Works with any OpenAI SDK.</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>curl http://localhost:3000/v1/chat/completions \
+  -H "Authorization: Bearer sk-blackbox-default" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "blackbox-auto",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'</pre>
+          </div>
+        </div>
 
-        <div class="stat-card">
-          <div class="stat-card-label">Requests Done</div>
-          <div class="stat-card-value green" id="successCount">0</div>
-          <div class="stat-card-sub" id="successRate">—</div>
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="endpoint-path">/chat</span>
+          </div>
+          <div class="endpoint-desc">Simple prompt/response endpoint for quick integrations.</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>curl -X POST http://localhost:3000/chat \
+  -H "Authorization: Bearer sk-blackbox-default" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "What is 2+2?"}'</pre>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Total Requests</div>
-          <div class="stat-card-value blue" id="totalRequests">0</div>
-          <div class="stat-card-sub" id="throughputSub">—</div>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/stats</span>
+          </div>
+          <div class="endpoint-desc">Get server statistics including cache, queue, and health data.</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Failed</div>
-          <div class="stat-card-value red" id="failCount">0</div>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/v1/models</span>
+          </div>
+          <div class="endpoint-desc">List available models (OpenAI-compatible).</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Max RPM</div>
-          <div class="stat-card-value amber" id="currentRPM">0</div>
-          <div class="stat-card-sub" id="rpmSub">requests per minute</div>
+        <h3 style="margin: 32px 0 16px;">Code Examples</h3>
+        
+        <div class="card-title">Python (with OpenAI SDK)</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre>from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:3000/v1",
+    api_key="sk-blackbox-default"
+)
+
+response = client.chat.completions.create(
+    model="blackbox-auto",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+print(response.choices[0].message.content)</pre>
+        </div>
+
+        <div class="card-title">JavaScript (Node.js)</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre>const OpenAI = require('openai');
+
+const client = new OpenAI({
+  baseURL: 'http://localhost:3000/v1',
+  apiKey: 'sk-blackbox-default'
+});
+
+const response = await client.chat.completions.create({
+  model: 'blackbox-auto',
+  messages: [{ role: 'user', content: 'Hello!' }]
+});
+console.log(response.choices[0].message.content);</pre>
+        </div>
+
+        <div class="card-title">JavaScript (Fetch)</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre>const response = await fetch('http://localhost:3000/chat', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer sk-blackbox-default',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ prompt: 'Hello!' })
+});
+const data = await response.json();
+console.log(data.response);</pre>
         </div>
       </div>
-
-      <!-- Bottom: Dead Providers -->
-      <div class="dead-section" id="deadSection" style="display:none">
-        <div class="section-title">
-          Dead Providers <span class="count" id="deadCount">0</span>
-        </div>
-        <div class="dead-grid" id="deadGrid"></div>
-      </div>
-
-      <!-- Uptime -->
-      <div class="uptime" id="uptime">Uptime: 00:00:00</div>
     </div>
   </div>
-
   <script>
-    // ── SSE Connection ──────────────────────────────────────────────────────
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Copy code
+    function copyCode(btn) {
+      const code = btn.parentElement.querySelector('pre').textContent;
+      navigator.clipboard.writeText(code);
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    }
+
+    // SSE Connection for live stats
     let evtSource = null;
-    let lastState = null;
-    let reconnectTimer = null;
-
-    function connect() {
+    function connectSSE() {
       evtSource = new EventSource('/events');
-
       evtSource.onmessage = (e) => {
         try {
-          lastState = JSON.parse(e.data);
-          render(lastState);
+          const state = JSON.parse(e.data);
+          updateDashboard(state);
           setConnected(true);
         } catch {}
       };
-
       evtSource.onerror = () => {
         setConnected(false);
         evtSource.close();
-        clearTimeout(reconnectTimer);
-        reconnectTimer = setTimeout(connect, 3000);
+        setTimeout(connectSSE, 3000);
       };
     }
 
     function setConnected(ok) {
-      const el = document.getElementById('connectionStatus');
+      const el = document.getElementById('status');
       if (ok) {
-        el.textContent = 'LIVE';
-        el.className = 'live-dot';
+        el.className = 'status-badge online';
+        el.innerHTML = '<div class="status-dot"></div><span>CONNECTED</span>';
       } else {
-        el.textContent = 'DISCONNECTED';
-        el.className = 'live-dot disconnected';
+        el.className = 'status-badge offline';
+        el.innerHTML = '<div class="status-dot"></div><span>DISCONNECTED</span>';
       }
     }
-
-    // ── Render ──────────────────────────────────────────────────────────────
-    function render(state) {
-      // Current Tag
-      if (state.currentTag) {
-        document.getElementById('currentTag').textContent = state.currentTag;
-      }
-
-      // Stats sidebar
-      document.getElementById('successCount').textContent = state.stats.successCount;
-      document.getElementById('totalRequests').textContent = state.stats.totalRequests;
-      document.getElementById('failCount').textContent = state.stats.failCount;
-      document.getElementById('currentRPM').textContent = state.stats.currentRPM;
-      document.getElementById('activeCount').textContent = state.stats.activeProviders;
-
-      // Job Stats
-      if (state.jobStats) {
-        document.getElementById('jobsAccepted').textContent = state.jobStats.accepted;
-        document.getElementById('jobsRejected').textContent = state.jobStats.rejected;
-        document.getElementById('jobsAcceptedSub').textContent = `Emails: ${state.jobStats.email} | Ext: ${state.jobStats.external} | Easy: ${state.jobStats.easyApply} | Others: ${state.jobStats.others}`;
-      }
-
-      // Queue Stats
-      if (state.queueStats && state.queueStats.total > 0) {
-        document.getElementById('queueStatus').style.display = 'block';
-        document.getElementById('qTotal').textContent = state.queueStats.total;
-        document.getElementById('qPending').textContent = state.queueStats.pending;
-        const pct = Math.round((state.queueStats.done / state.queueStats.total) * 100);
-        document.getElementById('qPercent').textContent = pct + '%';
-        document.getElementById('qBar').style.width = pct + '%';
-      } else {
-        document.getElementById('queueStatus').style.display = 'none';
-      }
-
+    function updateDashboard(state) {
+      // Stats
+      document.getElementById('totalRequests').textContent = state.stats.totalRequests || 0;
       const total = state.stats.totalRequests || 1;
-      const rate = ((state.stats.successCount / total) * 100).toFixed(1);
-      document.getElementById('successRate').textContent = `${rate}% success rate`;
-
-      const mins = (state.stats.uptimeSeconds / 60) || 1;
-      const throughput = (state.stats.successCount / mins).toFixed(1);
-      document.getElementById('throughputSub').textContent = `~${throughput} req/min avg`;
+      const successRate = ((state.stats.successCount / total) * 100).toFixed(1);
+      document.getElementById('successRate').textContent = successRate + '%';
 
       // Uptime
-      const s = state.stats.uptimeSeconds;
+      const s = state.stats.uptimeSeconds || 0;
       const hh = String(Math.floor(s / 3600)).padStart(2, '0');
       const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
       const ss = String(s % 60).padStart(2, '0');
-      document.getElementById('uptime').textContent = `Uptime: ${hh}:${mm}:${ss}`;
+      document.getElementById('uptime').textContent = `${hh}:${mm}:${ss}`;
 
-      // Active providers
-      renderProviders(state.providers);
+      const mins = Math.max(s / 60, 1);
+      document.getElementById('rpmSub').textContent = `~${(state.stats.successCount / mins).toFixed(1)} req/min`;
 
-      // Dead providers
-      renderDead(state.dead, state.providers.filter(p => p.status === 'dead'));
-
-      // Workers
-      if (state.workerStates && state.workerStates.length > 0) {
-        document.getElementById('workersStatus').style.display = 'block';
-        document.getElementById('workersCount').textContent = state.workerStates.length;
-        renderWorkers(state.workerStates);
-      } else {
-        document.getElementById('workersStatus').style.display = 'none';
-      }
-    }
-
-    function renderWorkers(workers) {
-      const grid = document.getElementById('workersGrid');
-      grid.innerHTML = workers.map((w, i) => {
-        const isIdle = w.includes('Idle') || w.includes('Initializing') || w.includes('Exited');
-        const colorClass = isIdle ? 'amber' : 'green';
-        const bgClass = isIdle ? 'amber-dim' : 'green-dim';
-        return `
-          <div class="dead-card" style="background: var(--${bgClass}); border: 1px solid rgba(var(--${colorClass}), 0.15);">
-            <div class="card-name" style="color: var(--${colorClass}); margin-bottom: 4px;">Worker ${i}</div>
-            <div class="reason" style="color: var(--text);">${w}</div>
-          </div>
-        `;
-      }).join('');
+      // Providers
+      document.getElementById('providerCount').textContent = state.stats.activeProviders || 0;
+      renderProviders(state.providers || []);
     }
 
     function renderProviders(providers) {
-      const grid = document.getElementById('providersGrid');
+      const list = document.getElementById('providersList');
       const active = providers.filter(p => p.status !== 'dead');
-
+      
       if (active.length === 0) {
-        grid.innerHTML = '<div class="empty-state">No active providers</div>';
+        list.innerHTML = '<div style="color: var(--text-dim); padding: 20px; text-align: center;">No active providers</div>';
         return;
       }
 
-      grid.innerHTML = active.map(p => {
-        const cooldownDisplay = p.status === 'ready'
-          ? '0.0'
-          : p.cooldownSec;
-
-        const barPercent = p.status === 'ready'
-          ? 100
-          : Math.max(0, 100 - (p.cooldownMs / (p.rpm > 100 ? 100 : p.rpm > 20 ? 3000 : 6000)) * 100);
-
-        return `
-          <div class="provider-card ${p.status}">
-            <div class="card-left">
-              <div class="card-header">
-                <div class="card-name">${p.name}</div>
-                <div class="card-badge ${p.status}">${p.status}</div>
-              </div>
-              <div class="card-model">${p.model}</div>
-            </div>
-            <div class="card-right">
-              <div class="card-stat">
-                <div class="card-stat-value">${cooldownDisplay}s</div>
-                <div class="card-stat-label">Cooldown</div>
-              </div>
-              <div class="card-stat">
-                <div class="card-stat-value">${p.requestsDone}</div>
-                <div class="card-stat-label">Done</div>
-              </div>
-              <div class="card-stat">
-                <div class="card-stat-value">${p.rpm}</div>
-                <div class="card-stat-label">RPM</div>
-              </div>
-            </div>
-            <div class="cooldown-bar-track">
-              <div class="cooldown-bar-fill" style="width: ${barPercent}%"></div>
-            </div>
+      list.innerHTML = active.map(p => `
+        <div class="provider ${p.status}">
+          <div class="provider-info">
+            <div class="provider-name">${p.name}</div>
+            <div class="provider-model">${p.model}</div>
           </div>
-        `;
-      }).join('');
-    }
-
-    function renderDead(deadFromRouter, deadFromBuckets) {
-      const all = [
-        ...deadFromRouter.map(d => ({ ...d, fromRouter: true })),
-        ...deadFromBuckets.map(d => ({
-          name: d.name,
-          model: d.model,
-          reason: d.lastError || 'Dead key',
-          killedAt: 'This session',
-          fromRouter: false,
-        })),
-      ];
-
-      const section = document.getElementById('deadSection');
-      const grid = document.getElementById('deadGrid');
-      const countEl = document.getElementById('deadCount');
-
-      if (all.length === 0) {
-        section.style.display = 'none';
-        return;
-      }
-
-      section.style.display = 'block';
-      countEl.textContent = all.length;
-
-      grid.innerHTML = all.map(d => `
-        <div class="dead-card">
-          <div class="card-name">☠️ ${d.name}</div>
-          <div class="card-model">${d.model}</div>
-          <div class="reason">${d.reason || 'Unknown error'}</div>
-          <div class="killed-at">${d.killedAt || ''}</div>
+          <div class="provider-stats">
+            <div class="provider-stat">
+              <div class="provider-stat-value">${p.requestsDone || 0}</div>
+              <div class="provider-stat-label">Done</div>
+            </div>
+            <div class="provider-stat">
+              <div class="provider-stat-value">${p.activeRequests || 0}/${p.maxConcurrency || 1}</div>
+              <div class="provider-stat-label">Active</div>
+            </div>
+            <span class="badge ${p.status}">${p.status}</span>
+          </div>
         </div>
       `).join('');
     }
+    // Chat Playground
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
 
-    // ── Init ────────────────────────────────────────────────────────────────
-    connect();
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    sendBtn.addEventListener('click', sendMessage);
+
+    async function sendMessage() {
+      const prompt = chatInput.value.trim();
+      if (!prompt) return;
+
+      const apiKey = document.getElementById('apiKey').value;
+      const endpoint = document.getElementById('apiEndpoint').value;
+
+      // Add user message
+      chatMessages.innerHTML += `<div class="message user">${escapeHtml(prompt)}</div>`;
+      chatInput.value = '';
+      sendBtn.disabled = true;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      try {
+        const start = Date.now();
+        const res = await fetch(`${endpoint}/v1/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'blackbox-auto',
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        const data = await res.json();
+        const latency = Date.now() - start;
+
+        if (data.error) {
+          chatMessages.innerHTML += `<div class="message error">Error: ${data.error.message}</div>`;
+        } else {
+          const content = data.choices[0].message.content;
+          const meta = data._meta || {};
+          chatMessages.innerHTML += `
+            <div class="message assistant">
+              ${escapeHtml(content)}
+              <div class="message-meta">
+                ${meta.cached ? '⚡ Cached' : `🤖 ${data.model}`} • ${latency}ms
+                ${meta.complexity ? `• ${meta.complexity}` : ''}
+              </div>
+            </div>
+          `;
+          
+          document.getElementById('responseInfo').innerHTML = `
+            Model: ${data.model}<br>
+            Latency: ${latency}ms<br>
+            Cached: ${meta.cached ? 'Yes' : 'No'}<br>
+            Tokens: ${data.usage?.total_tokens || 'N/A'}
+          `;
+        }
+      } catch (err) {
+        chatMessages.innerHTML += `<div class="message error">Connection error: ${err.message}</div>`;
+      }
+
+      sendBtn.disabled = false;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    }
+
+    // Fetch server stats periodically for cache/queue info
+    async function fetchStats() {
+      try {
+        const res = await fetch('/stats', {
+          headers: { 'Authorization': 'Bearer sk-blackbox-default' }
+        });
+        if (res.ok) {
+          const stats = await res.json();
+          if (stats.cache) {
+            document.getElementById('cacheHitRate').textContent = stats.cache.hitRate;
+            document.getElementById('cacheSize').textContent = stats.cache.size;
+            document.getElementById('cacheHits').textContent = stats.cache.hits;
+            document.getElementById('cacheMisses').textContent = stats.cache.misses;
+            document.getElementById('cacheEntries').textContent = `${stats.cache.size} / ${stats.cache.maxSize}`;
+          }
+          if (stats.queue) {
+            document.getElementById('queueLength').textContent = stats.queue.queueLength;
+            document.getElementById('queueActive').textContent = stats.queue.activeRequests;
+            document.getElementById('queueActiveDetail').textContent = `${stats.queue.activeRequests} / ${stats.queue.maxConcurrency}`;
+            document.getElementById('queuedDetail').textContent = `${stats.queue.queueLength} / ${stats.queue.maxQueueSize}`;
+            document.getElementById('queueProgress').style.width = `${(stats.queue.activeRequests / stats.queue.maxConcurrency) * 100}%`;
+            document.getElementById('queuedProgress').style.width = `${(stats.queue.queueLength / stats.queue.maxQueueSize) * 100}%`;
+          }
+        }
+      } catch {}
+    }
+
+    // Init
+    connectSSE();
+    fetchStats();
+    setInterval(fetchStats, 2000);
   </script>
 </body>
 </html>

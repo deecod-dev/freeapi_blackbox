@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "generate-questions": "node test/generate_questions.js",
     "test": "node test/run.js"
   },
